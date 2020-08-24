@@ -6,9 +6,9 @@ import android.graphics.drawable.Drawable;
 import android.graphics.drawable.GradientDrawable;
 import android.graphics.drawable.StateListDrawable;
 import android.widget.TextView;
+import com.cike978.appupdate.uitls.ColorUtil.*;
 
-import static com.vector.update_app.utils.ColorUtil.getColorStateList;
-import static com.vector.update_app.utils.ColorUtil.getRandomColor;
+
 
 
 /**
@@ -144,7 +144,7 @@ public class DrawableUtil {
      */
 
     public static StateListDrawable getDrawable(int cornerRadius) {
-        return getDrawable(cornerRadius, getRandomColor());
+        return getDrawable(cornerRadius, ColorUtil.getRandomColor());
     }
 
     /**
@@ -165,7 +165,7 @@ public class DrawableUtil {
      * @return 状态选择器
      */
     public static StateListDrawable getRandomColorDrawable(int cornerRadius) {
-        return getDrawable(cornerRadius, getRandomColor(), getRandomColor());
+        return getDrawable(cornerRadius, ColorUtil.getRandomColor(), ColorUtil.getRandomColor());
 
     }
 
@@ -185,7 +185,7 @@ public class DrawableUtil {
      * @return 状态选择器
      */
     public static StateListDrawable getStrokeRandomColorDrawable() {
-        return getStrokeSolidDrawable(10, 4, getRandomColor(), Color.TRANSPARENT);
+        return getStrokeSolidDrawable(10, 4, ColorUtil.getRandomColor(), Color.TRANSPARENT);
     }
 
     /**
@@ -198,7 +198,7 @@ public class DrawableUtil {
      */
     public static void setTextStrokeTheme(TextView textView, int strokeWidth, int cornerRadius, int color) {
         textView.setBackgroundDrawable(getStrokeSolidDrawable(cornerRadius, strokeWidth, color, Color.WHITE));
-        textView.setTextColor(getColorStateList(Color.WHITE, color));
+        textView.setTextColor(ColorUtil.getColorStateList(Color.WHITE, color));
         textView.getPaint().setFlags(Paint.FAKE_BOLD_TEXT_FLAG);
     }
 
@@ -241,7 +241,7 @@ public class DrawableUtil {
      */
     public static void setTextSolidTheme(TextView textView, int strokeWidth, int cornerRadius, int color) {
         textView.setBackgroundDrawable(getSolidStrokeDrawable(cornerRadius, strokeWidth, Color.WHITE, color));
-        textView.setTextColor(getColorStateList(color, Color.WHITE));
+        textView.setTextColor(ColorUtil.getColorStateList(color, Color.WHITE));
         textView.getPaint().setFlags(Paint.FAKE_BOLD_TEXT_FLAG);
     }
 

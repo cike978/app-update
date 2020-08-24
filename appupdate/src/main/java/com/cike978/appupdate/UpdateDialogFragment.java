@@ -131,13 +131,14 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         WindowManager.LayoutParams lp = dialogWindow.getAttributes();
         DisplayMetrics displayMetrics = getContext().getResources().getDisplayMetrics();
         lp.height = (int) (displayMetrics.heightPixels * 0.8f);
+        lp.width = (int) (displayMetrics.widthPixels * 0.7f);
         dialogWindow.setAttributes(lp);
     }
 
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
-        return inflater.inflate(R.layout.lib_update_app_dialog, container);
+        return inflater.inflate(R.layout.lib_update_app_dialog, container,false);
     }
 
     @Override
@@ -319,6 +320,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     private void installApp() {
 
         downloadApp();
+
         dismiss();
     }
 

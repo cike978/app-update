@@ -11,7 +11,7 @@ import android.os.Parcelable;
 import android.util.AttributeSet;
 import android.view.View;
 
-import com.vector.update_app.R;
+import com.cike978.appupdate.R;
 
 
 /**
