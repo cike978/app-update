@@ -1,4 +1,4 @@
-package com.yqs.appupdate;
+package com.cike978.appupdate.uitls;
 
 import android.annotation.SuppressLint;
 

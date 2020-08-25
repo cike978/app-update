@@ -1,6 +1,6 @@
 package com.cike978.appupdate.callback;
 
-import com.cike978.appupdate.bean.UpdateBean;
+import com.cike978.appupdate.bean.ResUpdateBean;
 
 /**
  * Created by yqs97.
@@ -10,11 +10,13 @@ import com.cike978.appupdate.bean.UpdateBean;
 public interface UpdateCallBack {
 
     /**
-     *
-     * @param updateBean
-     * @param newVersion 新的版本号
-     * @param versionCode 新的版本code
-     * @return true 表示用户自己处理升级
+     * 资源文件下载完成
+     * @param resDownloadPath
+     * @param resUpdateBean
      */
-    boolean hasNewVersion(UpdateBean updateBean,String newVersion,Integer versionCode);
+    void downLoadResFinish(String resDownloadPath, ResUpdateBean resUpdateBean);
+
+    void ignoreUpdateApk();
+
+    void ignoreUpdateRes();
 }

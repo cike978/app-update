@@ -58,6 +58,11 @@ abstract class UpdateBean : Serializable {
     var downloadUrl: String? = null
 
     /**
+     * 解压目录
+     */
+    var unzipDir: String? = null
+
+    /**
      * 资源类型，apk 还是压缩包
      */
     abstract fun getType(): String

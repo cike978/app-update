@@ -6,6 +6,8 @@ import android.text.TextUtils;
 import android.util.Log;
 
 
+import com.cike978.appupdate.uitls.FileUtils;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;

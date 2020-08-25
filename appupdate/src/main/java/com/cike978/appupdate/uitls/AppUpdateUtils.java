@@ -23,10 +23,17 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
+import com.cike978.appupdate.bean.ApkUpdateBean;
 import com.cike978.appupdate.bean.UpdateBean;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 /**
  * Created by yqs97.
@@ -46,21 +53,19 @@ public class AppUpdateUtils {
     }
 
 
-    public static File getAppFile(UpdateBean updateAppBean) {
-        String appName = getApkName(updateAppBean);
-        return new File(updateAppBean.getDownLoadFilePath()
-                .concat(File.separator + updateAppBean.getVersion())
-                .concat(File.separator + appName));
-    }
-
     @NonNull
-    public static String getApkName(UpdateBean updateAppBean) {
-        String apkUrl = updateAppBean.getDownloadUrl();
-        String appName = apkUrl.substring(apkUrl.lastIndexOf("/") + 1, apkUrl.length());
-        if (!appName.endsWith(".apk")) {
-            appName = "temp.apk";
+    public static String getDownFileName(UpdateBean updateAppBean) {
+        String url = updateAppBean.getDownloadUrl();
+        String fileName = url.substring(url.lastIndexOf("/") + 1, url.length());
+        if (updateAppBean instanceof ApkUpdateBean) {
+            if (!fileName.endsWith(".apk")) {
+                fileName = "temp.apk";
+            }
+        } else {
+            fileName = "res.zip";
         }
-        return appName;
+
+        return fileName;
     }
 
 
@@ -146,8 +151,9 @@ public class AppUpdateUtils {
         String packageName = context.getPackageName();
 
         List<ActivityManager.RunningAppProcessInfo> appProcesses = activityManager.getRunningAppProcesses();
-        if (appProcesses == null)
+        if (appProcesses == null) {
             return false;
+        }
 
         for (ActivityManager.RunningAppProcessInfo appProcess : appProcesses) {
 
@@ -241,5 +247,76 @@ public class AppUpdateUtils {
 
     public static String getLocalResVersion(Context context) {
         return getSP(context).getString(LOCAL_RES_VERSION, "0");
+    }
+
+
+    /**
+     * 解压assets的zip压缩文件到指定目录
+     * 使用ant.jar方法来解压，解决中文乱码的问题
+     *
+     * @param context         上下文对象
+     * @param assetName       压缩文件名
+     * @param outputDirectory 输出目录
+     * @throws IOException
+     */
+    public static void unZipAssetsFileUsingAnt(Context context, String assetName, String outputDirectory) throws IOException {
+        // 创建解压目标目录
+        File file = new File(outputDirectory);
+        // 如果目标目录不存在，则创建
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        // 打开压缩文件
+        InputStream inputStream = context.getAssets().open(assetName);
+        unzipInputStream(outputDirectory, inputStream);
+        return;
+    }
+
+
+    public static void unZipFileSDUsingAnt(Context context, File zipFile, String outputDirectory) throws IOException {
+        // 创建解压目标目录
+        File file = new File(outputDirectory);
+        // 如果目标目录不存在，则创建
+        if (!file.exists()) {
+            file.mkdirs();
+        }
+        // 打开压缩文件
+        InputStream inputStream = new FileInputStream(zipFile);
+        unzipInputStream(outputDirectory, inputStream);
+        return;
+    }
+
+    private static void unzipInputStream(String outputDirectory, InputStream inputStream) throws IOException {
+        File file;
+        ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+        // 读取一个进入点
+        ZipEntry zipEntry = zipInputStream.getNextEntry();
+        // 使用1Mbuffer
+        byte[] buffer = new byte[1024 * 1024];
+        // 解压时字节计数
+        int count = 0;
+        // 如果进入点为空说明已经遍历完所有压缩包中文件和目录
+        while (zipEntry != null) {
+            file = new File(outputDirectory + File.separator + zipEntry.getName());
+
+            if (zipEntry.isDirectory()) {
+                file.mkdirs();
+            } else {
+                // 如果指定文件的目录不存在,则创建之.
+                File parent = file.getParentFile();
+                if (!parent.exists()) {
+                    parent.mkdirs();
+                }
+
+                FileOutputStream fileOutputStream = new FileOutputStream(file);
+                while ((count = zipInputStream.read(buffer)) > 0) {
+                    fileOutputStream.write(buffer, 0, count);
+                }
+                fileOutputStream.close();
+            }
+            // 定位到下一个文件入口
+            zipEntry = zipInputStream.getNextEntry();
+        }
+        zipInputStream.close();
     }
 }

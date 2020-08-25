@@ -6,13 +6,15 @@ import com.cike978.appupdate.bean.ApkUpdateBean;
 import com.cike978.appupdate.bean.ResUpdateBean;
 import com.cike978.appupdate.bean.UpdateBean;
 
+import java.io.Serializable;
+
 /**
  * 版本号对比
  * Created by yqs97.
  * Date: 2020/8/24
  * Time: 17:29
  */
- public interface IVersionCompare {
+ public interface IVersionCompare extends Serializable {
 
     /**
      * 是否具有新版本的apk更新

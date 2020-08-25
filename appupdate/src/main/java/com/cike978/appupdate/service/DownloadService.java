@@ -13,12 +13,12 @@ import android.os.IBinder;
 import android.text.TextUtils;
 import android.widget.Toast;
 
-
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
 import com.cike978.appupdate.HttpManager;
 import com.cike978.appupdate.R;
+import com.cike978.appupdate.bean.ResUpdateBean;
 import com.cike978.appupdate.bean.UpdateBean;
 import com.cike978.appupdate.uitls.AppUpdateUtils;
 
@@ -122,9 +122,14 @@ public class DownloadService extends Service {
     /**
      * 下载模块
      */
-    private void startDownload(UpdateBean updateApp,HttpManager httpManager, final DownloadCallback callback) {
+    private void startDownload(UpdateBean updateApp, HttpManager httpManager, final DownloadCallback callback) {
 
-//        mDismissNotificationProgress = updateApp.isDismissNotificationProgress();
+        if (updateApp instanceof ResUpdateBean) {
+            //资源文件下载不需要通知栏进度
+            mDismissNotificationProgress = true;
+
+        }
+
 
         String apkUrl = updateApp.getDownloadUrl();
         if (TextUtils.isEmpty(apkUrl)) {
@@ -132,7 +137,7 @@ public class DownloadService extends Service {
             stop(contentText);
             return;
         }
-        String appName = AppUpdateUtils.getApkName(updateApp);
+        String downFileName = AppUpdateUtils.getDownFileName(updateApp);
 
         File appDir = new File(updateApp.getDownLoadFilePath());
         if (!appDir.exists()) {
@@ -141,7 +146,7 @@ public class DownloadService extends Service {
 
         String target = appDir + File.separator + updateApp.getVersion();
 
-        httpManager.download(apkUrl, target, appName, new FileDownloadCallBack(callback));
+        httpManager.download(apkUrl, target, downFileName, new FileDownloadCallBack(callback));
     }
 
     private void stop(String contentText) {
@@ -220,9 +225,9 @@ public class DownloadService extends Service {
          * @param updateApp 新app信息
          * @param callback  下载回调
          */
-        public void start(UpdateBean updateApp,HttpManager httpManager, DownloadCallback callback) {
+        public void start(UpdateBean updateApp, HttpManager httpManager, DownloadCallback callback) {
             //下载
-            startDownload(updateApp,httpManager, callback);
+            startDownload(updateApp, httpManager, callback);
         }
 
         public void stop(String msg) {
@@ -297,6 +302,11 @@ public class DownloadService extends Service {
                     close();
                     return;
                 }
+            }
+
+            if (file.getAbsolutePath().contains(".zip")) {
+                //不是安装包，不走升级方法
+                return;
             }
 
             try {
