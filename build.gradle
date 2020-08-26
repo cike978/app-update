@@ -31,6 +31,7 @@ allprojects {
         // jcenter()
         maven { url 'https://maven.aliyun.com/repository/jcenter' }
 
+        //在jcenter 没审核之前使用自己的仓库
         maven { url 'https://dl.bintray.com/yqs/feature' }
         google()
         jcenter()
