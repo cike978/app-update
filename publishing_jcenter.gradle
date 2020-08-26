@@ -1,0 +1,56 @@
+apply plugin: 'com.novoda.bintray-release'
+
+
+//文档地址
+//https://github.com/HailouWang/bintray-release/wiki/%E9%85%8D%E7%BD%AEpublish%E9%97%AD%E5%8C%85
+
+
+version = publishVersion
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+
+publish {
+    bintrayUser = properties.getProperty("bintray.user")
+    bintrayKey = properties.getProperty("bintray.apikey")
+
+    userOrg = 'yqs'
+    repoName='feature'
+    groupId = properties.getProperty("publishGroup")
+    licences = ['Apache-2.0']
+    artifactId = moduleName
+    publishVersion = version
+    desc = descContent
+    website = website
+    dryRun =false
+}
+
+
+//dependencies {
+//    implementation fileTree(dir: 'libs', include: ['*.jar'])
+//}
+//
+//task sourcesJar(type: Jar) {
+//    from android.sourceSets.main.java.srcDirs
+//    classifier = 'sources'
+//}
+//
+//task javadoc(type: Javadoc) {
+//    source = android.sourceSets.main.java.srcDirs
+//    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+//}
+//
+//task javadocJar(type: Jar, dependsOn: javadoc) {
+//    classifier = 'javadoc'
+//    from javadoc.destinationDir
+//}
+//
+//artifacts {
+//    archives javadocJar
+//    archives sourcesJar
+//}
+//
+//task findConventions {
+//    doLast {
+//        println project.getConvention()
+//    }
+//}

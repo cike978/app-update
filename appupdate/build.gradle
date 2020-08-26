@@ -2,6 +2,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 apply plugin: 'kotlin-android-extensions'
 
+
 android {
     compileSdkVersion 29
     buildToolsVersion "30.0.1"
@@ -36,3 +37,12 @@ dependencies {
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.2.0'
 
 }
+
+ext {
+    publishVersion = '0.0.1'
+    moduleName = 'appupdate'
+    descContent = '应用更新'
+    website='https://github.com/cike978/app-update'
+}
+
+apply from: '../publishing_jcenter.gradle'

@@ -31,7 +31,11 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.2.0'
     implementation 'androidx.constraintlayout:constraintlayout:1.1.3'
 
-    implementation project(":appupdate")
+    //使用源码
+//    implementation project(":appupdate")
+
+    //jcenter 依赖
+    implementation 'com.cike978:appupdate:0.0.1'
 
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'androidx.test.ext:junit:1.1.1'
