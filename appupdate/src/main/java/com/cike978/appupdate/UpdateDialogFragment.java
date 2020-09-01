@@ -4,6 +4,7 @@ import android.Manifest;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
@@ -83,7 +84,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     private int mDefaultColor = 0xffe94339;
     private int mDefaultPicResId = R.drawable.lib_update_app_top_bg;
     private ImageView mTopIv;
-    private TextView mIgnore;
+    private TextView mIgnoreTextView;
     private DownloadService.DownloadBinder mDownloadBinder;
     private Activity mActivity;
 
@@ -114,10 +115,6 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         super.onStart();
         //点击window外的区域 是否消失
         getDialog().setCanceledOnTouchOutside(false);
-        //是否可以取消,会影响上面那条属性
-//        setCancelable(false);
-//        //window外可以点击,不拦截窗口外的事件
-//        getDialog().getWindow().addFlags(WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL);
 
         getDialog().setOnKeyListener(new DialogInterface.OnKeyListener() {
             @Override
@@ -126,9 +123,10 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                     //禁用
                     if (mUpdateApp != null && mUpdateApp.getForceUpdate()) {
                         //返回桌面
-//                        startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+                        startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
                         return true;
                     } else {
+                        excuteIgnoreCallbackOrBackgroundDownTip();
                         return false;
                     }
                 }
@@ -172,9 +170,8 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         mLlClose = view.findViewById(R.id.ll_close);
         //顶部图片
         mTopIv = view.findViewById(R.id.iv_top);
-        //忽略
-        mIgnore = view.findViewById(R.id.tv_ignore);
-
+        //忽略此版本  下次再说
+        mIgnoreTextView = view.findViewById(R.id.tv_ignore);
     }
 
     @Override
@@ -187,28 +184,23 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         mUpdateApp = (UpdateBean) getArguments().getSerializable(AppVersionManager.INTENT_KEY);
         updateConfig = (UpdateConfig) getArguments().getSerializable(AppVersionManager.UPDATECONFIG_KEY);
         isBackgroundDownload = getArguments().getBoolean(AppVersionManager.BACK_DOWN_KEY, false);
-
         //设置主题色
         initTheme();
-
 
         if (mUpdateApp != null) {
             //弹出对话框
             final String dialogTitle = mUpdateApp.getTitle();
             final String newVersion = mUpdateApp.getVersion();
-//            final String targetSize = mUpdateApp.getTargetSize();
+            final String targetSize = mUpdateApp.getTargetSize();
             final String updateLog = mUpdateApp.getUpdateNote();
 
             String msg = "";
-
-//            if (!TextUtils.isEmpty(targetSize)) {
-//                msg = "新版本大小：" + targetSize + "\n\n";
-//            }
-
+            if (!TextUtils.isEmpty(targetSize)) {
+                msg = "新版本大小：" + targetSize + "\n\n";
+            }
             if (!TextUtils.isEmpty(updateLog)) {
                 msg += updateLog;
             }
-
             //更新内容
             mContentTextView.setText(msg);
             //标题
@@ -218,9 +210,9 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 mLlClose.setVisibility(View.GONE);
             } else {
                 //不是强制更新时，才生效
-//                if (mUpdateApp.isShowIgnoreVersion()) {
-                mIgnore.setVisibility(View.VISIBLE);
-                //  }
+                if (mUpdateApp.isShowIgnoreView()) {
+                    mIgnoreTextView.setVisibility(View.VISIBLE);
+                }
             }
 
             initEvents();
@@ -283,7 +275,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     private void initEvents() {
         mUpdateOkButton.setOnClickListener(this);
         mIvClose.setOnClickListener(this);
-        mIgnore.setOnClickListener(this);
+        mIgnoreTextView.setOnClickListener(this);
     }
 
     @Override
@@ -308,27 +300,34 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
 
         } else if (i == R.id.iv_close) {
             cancelDownloadService();
-            if (updateCallBack != null) {
-                if (mUpdateApp instanceof ApkUpdateBean) {
-                    updateCallBack.ignoreUpdateApk();
-                } else {
-                    updateCallBack.ignoreUpdateRes();
-                }
-            }
+            excuteIgnoreCallbackOrBackgroundDownTip();
             dismiss();
         } else if (i == R.id.tv_ignore) {
 //            AppUpdateUtils.saveIgnoreVersion(getActivity(), mUpdateApp.getVersion());
-
-            if (updateCallBack != null) {
-                if (mUpdateApp instanceof ApkUpdateBean) {
-                    updateCallBack.ignoreUpdateApk();
-                } else {
-                    updateCallBack.ignoreUpdateRes();
-                }
-            }
+            excuteIgnoreCallbackOrBackgroundDownTip();
             dismiss();
         }
     }
+
+    /**
+     * 执行忽略版本升级的回调或者后台下载的提示
+     */
+    public void excuteIgnoreCallbackOrBackgroundDownTip() {
+        if (mDownloadBinder != null) {
+            //表示已经开始下载了
+            Toast.makeText(getActivity().getApplicationContext(), "正在后台下载文件...", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        if (updateCallBack != null) {
+            if (mUpdateApp instanceof ApkUpdateBean) {
+                updateCallBack.ignoreUpdateApk();
+            } else {
+                updateCallBack.ignoreUpdateRes();
+            }
+        }
+    }
+
 
     public void cancelDownloadService() {
         if (mDownloadBinder != null) {
@@ -338,10 +337,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     }
 
     private void beforeDownloadFile() {
-
         downloadApp();
-
-
         if (isBackgroundDownload) {
             dismiss();
         }
@@ -369,7 +365,10 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
      */
     private void downloadApp() {
         //使用ApplicationContext延长他的生命周期
+//        DownloadService.bindService(getActivity().getApplicationContext(), conn);
         DownloadService.bindService(getActivity().getApplicationContext(), conn);
+        mIgnoreTextView.setVisibility(View.GONE);
+
     }
 
     /**

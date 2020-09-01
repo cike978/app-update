@@ -25,8 +25,8 @@ class MainActivity : AppCompatActivity() {
             override fun onClick(it: View) {
 
                 var apkUpdateBean: ApkUpdateBean = ApkUpdateBean();
-                apkUpdateBean.versionCode = 1
-                apkUpdateBean.version = "1.0";
+                apkUpdateBean.versionCode = 12
+                apkUpdateBean.version = "1.2";
                 apkUpdateBean.forceUpdate = false
                 apkUpdateBean.title = "应用更新"
                 apkUpdateBean.updateNote = "修复了bug\n增加了新功能\n"

@@ -67,5 +67,13 @@ abstract class UpdateBean : Serializable {
      */
     abstract fun getType(): String
 
+    /**
+     * 是否显示忽略版本的view
+     */
+    var isShowIgnoreView:Boolean=false
 
+    /**
+     * apk或者资源文件大小
+     */
+    var targetSize:String?=null
 }

@@ -80,7 +80,7 @@
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
-                android:text="忽略此版本"
+                android:text="下次再说"
                 android:textColor="#666"
                 android:textSize="14sp"
                 android:visibility="gone" />
