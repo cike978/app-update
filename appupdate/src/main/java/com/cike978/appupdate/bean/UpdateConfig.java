@@ -5,7 +5,6 @@ import androidx.annotation.DrawableRes;
 import com.cike978.appupdate.DefaultVersionCompare;
 import com.cike978.appupdate.HttpManager;
 import com.cike978.appupdate.IVersionCompare;
-import com.cike978.appupdate.callback.UpdateCallBack;
 
 import java.io.Serializable;
 

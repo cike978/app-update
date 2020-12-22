@@ -11,24 +11,7 @@ import java.util.Map;
  * app版本更新接口
  */
 public interface HttpManager extends Serializable {
-//    /**
-//     * 异步get
-//     *
-//     * @param url      get请求地址
-//     * @param params   get参数
-//     * @param callBack 回调
-//     */
-//    void asyncGet(@NonNull String url, @NonNull Map<String, String> params, @NonNull Callback callBack);
-//
-//
-//    /**
-//     * 异步post
-//     *
-//     * @param url      post请求地址
-//     * @param params   post请求参数
-//     * @param callBack 回调
-//     */
-//    void asyncPost(@NonNull String url, @NonNull Map<String, String> params, @NonNull Callback callBack);
+
 
     /**
      * 下载
@@ -39,6 +22,11 @@ public interface HttpManager extends Serializable {
      * @param callback 回调
      */
     void download(@NonNull String url, @NonNull String path, @NonNull String fileName, @NonNull FileCallback callback);
+
+    /**
+     * 取消下载
+     */
+    void cancelDownLoad();
 
     /**
      * 下载回调

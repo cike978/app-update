@@ -12,6 +12,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.List;
@@ -470,7 +471,7 @@ public abstract class BaseRequestManager {
                     if (e.toString().contains("closed") || "java.io.IOException: Canceled".equals(e.toString())) {
                         return;
                     }
-                    failedCallBack(FAIL_CODE,"请求失败", callBack);
+                    failedCallBack(FAIL_CODE, "请求失败", callBack);
                 }
 
                 @Override
@@ -701,7 +702,13 @@ public abstract class BaseRequestManager {
                     successCallBack(downloadedFile, callBack);
                 } catch (Exception e) {
                     e.printStackTrace();
-                    failedCallBack(response.code(), "下载时便", callBack);
+                    if (e instanceof SocketException) {
+                        if ("Socket is closed".equals(e.getMessage())) {
+                            Log.e(TAG, "用户取消了下载");
+                            return;
+                        }
+                    }
+                    failedCallBack(response.code(), "下载失败", callBack);
                 } finally {
                     try {
                         is.close();

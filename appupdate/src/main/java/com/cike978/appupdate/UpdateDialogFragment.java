@@ -332,8 +332,9 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     public void cancelDownloadService() {
         if (mDownloadBinder != null) {
             // 标识用户已经点击了更新，之后点击取消
-            mDownloadBinder.stop("取消下载");
+            mDownloadBinder.stop("取消下载",updateConfig.getHttpManager());
         }
+        getActivity().getApplicationContext().unbindService(conn);
     }
 
     private void beforeDownloadFile() {

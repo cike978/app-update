@@ -37,4 +37,10 @@ public class MyHttpManager implements HttpManager {
             }
         });
     }
+
+    @Override
+    public void cancelDownLoad() {
+        TCommonRequestManager.getInstance().cannelOkHttpRequest(TAG);
+
+    }
 }

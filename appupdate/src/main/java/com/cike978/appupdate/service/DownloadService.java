@@ -157,6 +157,9 @@ public class DownloadService extends Service {
             notification.flags = Notification.FLAG_AUTO_CANCEL;
             mNotificationManager.notify(NOTIFY_ID, notification);
         }
+
+        //todo 因为停止下载了所以取消通知栏
+        mNotificationManager.cancel(NOTIFY_ID);
         close();
     }
 
@@ -230,7 +233,8 @@ public class DownloadService extends Service {
             startDownload(updateApp, httpManager, callback);
         }
 
-        public void stop(String msg) {
+        public void stop(String msg, HttpManager httpManager) {
+            httpManager.cancelDownLoad();
             DownloadService.this.stop(msg);
         }
     }
