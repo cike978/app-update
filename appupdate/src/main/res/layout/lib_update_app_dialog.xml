@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center"
@@ -42,9 +43,9 @@
                 android:id="@+id/tv_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="是否升级到4.1.1版本？"
                 android:textColor="@android:color/black"
-                android:textSize="15sp" />
+                android:textSize="15dp"
+                tools:text="是否升级到4.1.1版本？" />
 
             <ScrollView
                 android:layout_width="match_parent"
@@ -58,9 +59,9 @@
                     android:id="@+id/tv_update_info"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    android:text="1，xxxxxxxx\n2，ooooooooo"
                     android:textColor="#666"
-                    android:textSize="14sp" />
+                    android:textSize="14dp"
+                    tools:text="1，修复了bug\n2，新增功能" />
             </ScrollView>
 
 
@@ -72,17 +73,18 @@
                 android:minHeight="40dp"
                 android:text="升级"
                 android:textColor="@android:color/white"
-                android:textSize="15sp" />
+                android:textSize="15dp" />
 
             <TextView
                 android:id="@+id/tv_ignore"
+
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_gravity="center"
                 android:layout_marginTop="10dp"
                 android:text="下次再说"
                 android:textColor="#666"
-                android:textSize="14sp"
+                android:textSize="14dp"
                 android:visibility="gone" />
 
             <com.cike978.appupdate.view.NumberProgressBar

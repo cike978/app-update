@@ -8,6 +8,8 @@ import java.io.Serializable
  * Date: 2020/8/21
  * Time: 15:18
  */
+@Deprecated("弃用")
+
 class ResUpdateBean : UpdateBean(), Serializable {
 
 

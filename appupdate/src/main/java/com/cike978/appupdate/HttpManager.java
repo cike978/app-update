@@ -1,7 +1,11 @@
 package com.cike978.appupdate;
 
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
+
+import com.cike978.appupdate.bean.VersionDTO;
 
 import java.io.File;
 import java.io.Serializable;
@@ -27,6 +31,7 @@ public interface HttpManager extends Serializable {
      * 取消下载
      */
     void cancelDownLoad();
+
 
     /**
      * 下载回调
@@ -60,16 +65,21 @@ public interface HttpManager extends Serializable {
         void onBefore();
     }
 
+
+
+
+    public  void checkVersion(Context context, Callback<VersionDTO> callback);
+
     /**
      * 网络请求回调
      */
-    interface Callback {
+    interface Callback<T> {
         /**
          * 结果回调
          *
          * @param result 结果
          */
-        void onResponse(String result);
+        void onResponse(T result);
 
         /**
          * 错误回调

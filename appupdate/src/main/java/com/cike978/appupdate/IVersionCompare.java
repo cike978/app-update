@@ -3,7 +3,9 @@ package com.cike978.appupdate;
 import android.content.Context;
 
 import com.cike978.appupdate.bean.ApkUpdateBean;
+import com.cike978.appupdate.bean.AppVersionInfo;
 import com.cike978.appupdate.bean.ResUpdateBean;
+import com.cike978.appupdate.bean.ResVersionInfo;
 import com.cike978.appupdate.bean.UpdateBean;
 
 import java.io.Serializable;
@@ -18,16 +20,16 @@ import java.io.Serializable;
 
     /**
      * 是否具有新版本的apk更新
-     * @param updateBean
+     * @param appVersionInfo
      * @return
      */
-     boolean hasNewVersionApk(Context context,ApkUpdateBean updateBean);
+     boolean hasNewVersionApk(Context context, AppVersionInfo appVersionInfo);
 
     /**
      * 是否有新的apk版本更新
-     * @param updateBean
+     * @param resVersionInfo
      * @return
      */
-    boolean hasNewVersionRes(Context context,ResUpdateBean updateBean);
+    boolean hasNewVersionRes(Context context, ResVersionInfo resVersionInfo);
 
 }

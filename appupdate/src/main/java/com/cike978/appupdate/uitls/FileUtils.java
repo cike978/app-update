@@ -1,11 +1,14 @@
 package com.cike978.appupdate.uitls;
 
 import android.annotation.SuppressLint;
+import android.net.Uri;
+import android.util.Log;
 
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.FileFilter;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -930,5 +933,224 @@ public final class FileUtils {
 
     public interface OnReplaceListener {
         boolean onReplace();
+    }
+
+
+
+    /**
+     * Copy the directory.
+     *
+     * @param srcDirPath  The path of source directory.
+     * @param destDirPath The path of destination directory.
+     * @param listener    The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean copyDir(final String srcDirPath,
+                                  final String destDirPath,
+                                  final OnReplaceListener listener) {
+        return copyDir(getFileByPath(srcDirPath), getFileByPath(destDirPath), listener);
+    }
+
+    /**
+     * Copy the directory.
+     *
+     * @param srcDir   The source directory.
+     * @param destDir  The destination directory.
+     * @param listener The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean copyDir(final File srcDir,
+                                  final File destDir,
+                                  final OnReplaceListener listener) {
+        return copyOrMoveDir(srcDir, destDir, listener, false);
+    }
+
+    /**
+     * Copy the file.
+     *
+     * @param srcFilePath  The path of source file.
+     * @param destFilePath The path of destination file.
+     * @param listener     The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean copyFile(final String srcFilePath,
+                                   final String destFilePath,
+                                   final OnReplaceListener listener) {
+        return copyFile(getFileByPath(srcFilePath), getFileByPath(destFilePath), listener);
+    }
+
+    /**
+     * Copy the file.
+     *
+     * @param srcFile  The source file.
+     * @param destFile The destination file.
+     * @param listener The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean copyFile(final File srcFile,
+                                   final File destFile,
+                                   final OnReplaceListener listener) {
+        return copyOrMoveFile(srcFile, destFile, listener, false);
+    }
+
+    public static boolean copyFile(final FileInputStream fileInputStream,
+                                   final File destFile,
+                                   final OnReplaceListener listener) {
+        return copyOrMoveFile(fileInputStream, destFile, listener, false);
+    }
+
+
+
+    /**
+     * Move the directory.
+     *
+     * @param srcDirPath  The path of source directory.
+     * @param destDirPath The path of destination directory.
+     * @param listener    The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean moveDir(final String srcDirPath,
+                                  final String destDirPath,
+                                  final OnReplaceListener listener) {
+        return moveDir(getFileByPath(srcDirPath), getFileByPath(destDirPath), listener);
+    }
+
+    /**
+     * Move the directory.
+     *
+     * @param srcDir   The source directory.
+     * @param destDir  The destination directory.
+     * @param listener The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean moveDir(final File srcDir,
+                                  final File destDir,
+                                  final OnReplaceListener listener) {
+        return copyOrMoveDir(srcDir, destDir, listener, true);
+    }
+
+    /**
+     * Move the file.
+     *
+     * @param srcFilePath  The path of source file.
+     * @param destFilePath The path of destination file.
+     * @param listener     The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean moveFile(final String srcFilePath,
+                                   final String destFilePath,
+                                   final OnReplaceListener listener) {
+        return moveFile(getFileByPath(srcFilePath), getFileByPath(destFilePath), listener);
+    }
+
+    /**
+     * Move the file.
+     *
+     * @param srcFile  The source file.
+     * @param destFile The destination file.
+     * @param listener The replace listener.
+     * @return {@code true}: success<br>{@code false}: fail
+     */
+    public static boolean moveFile(final File srcFile,
+                                   final File destFile,
+                                   final OnReplaceListener listener) {
+        return copyOrMoveFile(srcFile, destFile, listener, true);
+    }
+
+    private static boolean copyOrMoveDir(final File srcDir,
+                                         final File destDir,
+                                         final OnReplaceListener listener,
+                                         final boolean isMove) {
+        if (srcDir == null || destDir == null) return false;
+        // destDir's path locate in srcDir's path then return false
+        String srcPath = srcDir.getPath() + File.separator;
+        String destPath = destDir.getPath() + File.separator;
+        if (destPath.contains(srcPath)) return false;
+        if (!srcDir.exists() || !srcDir.isDirectory()) return false;
+        if (destDir.exists()) {
+            if (listener.onReplace()) {// require delete the old directory
+                if (!deleteAllInDir(destDir)) {// unsuccessfully delete then return false
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+        if (!createOrExistsDir(destDir)) return false;
+        File[] files = srcDir.listFiles();
+        for (File file : files) {
+            File oneDestFile = new File(destPath + file.getName());
+            if (file.isFile()) {
+                if (!copyOrMoveFile(file, oneDestFile, listener, isMove)) return false;
+            } else if (file.isDirectory()) {
+                if (!copyOrMoveDir(file, oneDestFile, listener, isMove)) return false;
+            }
+        }
+        return !isMove || deleteDir(srcDir);
+    }
+
+    private static boolean copyOrMoveFile(final File srcFile,
+                                          final File destFile,
+                                          final OnReplaceListener listener,
+                                          final boolean isMove) {
+        if (srcFile == null || destFile == null) return false;
+        // srcFile equals destFile then return false
+        if (srcFile.equals(destFile)) return false;
+        // srcFile doesn't exist or isn't a file then return false
+        if (!srcFile.exists() || !srcFile.isFile()) return false;
+        if (destFile.exists()) {
+            if (listener.onReplace()) {// require delete the old file
+                if (!destFile.delete()) {// unsuccessfully delete then return false
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+        if (!createOrExistsDir(destFile.getParentFile())) return false;
+        try {
+            return FileIOUtils.writeFileFromIS(destFile, new FileInputStream(srcFile), false)
+                    && !(isMove && !deleteFile(srcFile));
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * 拷贝文件
+     *
+     * @param fileInputStream
+     * @param destFile
+     * @param listener
+     * @param isMove
+     * @return
+     */
+    private static boolean copyOrMoveFile(final FileInputStream fileInputStream,
+                                          final File destFile,
+                                          final OnReplaceListener listener,
+                                          final boolean isMove) {
+        if (fileInputStream == null || destFile == null) {
+            return false;
+        }
+
+        if (destFile.exists()) {
+            if (listener.onReplace()) {// require delete the old file
+                if (!destFile.delete()) {// unsuccessfully delete then return false
+                    return false;
+                }
+            } else {
+                return true;
+            }
+        }
+        if (!createOrExistsDir(destFile.getParentFile())) {
+            return false;
+        }
+        try {
+            return FileIOUtils.writeFileFromIS(destFile, fileInputStream, false);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }

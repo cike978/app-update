@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_update_is_latest_version">当前已经是最新版本</string>
+    <string name="app_update_checkversion_fail">检查版本失败!</string>
 
 
 

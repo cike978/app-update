@@ -16,10 +16,9 @@ import android.widget.Toast;
 import androidx.annotation.Nullable;
 import androidx.core.app.NotificationCompat;
 
+import com.cike978.appupdate.AppVersionManager;
 import com.cike978.appupdate.HttpManager;
 import com.cike978.appupdate.R;
-import com.cike978.appupdate.bean.ResUpdateBean;
-import com.cike978.appupdate.bean.UpdateBean;
 import com.cike978.appupdate.uitls.AppUpdateUtils;
 
 import java.io.File;
@@ -122,31 +121,31 @@ public class DownloadService extends Service {
     /**
      * 下载模块
      */
-    private void startDownload(UpdateBean updateApp, HttpManager httpManager, final DownloadCallback callback) {
+    private void startDownload(String downloadUrl, String downloadDir, int updateFileType, String versionName,
+                               HttpManager httpManager, final DownloadCallback callback) {
 
-        if (updateApp instanceof ResUpdateBean) {
+        if (updateFileType == AppVersionManager.TYPE_FILE_RES) {
             //资源文件下载不需要通知栏进度
             mDismissNotificationProgress = true;
 
         }
 
 
-        String apkUrl = updateApp.getDownloadUrl();
-        if (TextUtils.isEmpty(apkUrl)) {
+        if (TextUtils.isEmpty(downloadUrl)) {
             String contentText = "新版本下载路径错误";
             stop(contentText);
             return;
         }
-        String downFileName = AppUpdateUtils.getDownFileName(updateApp);
+        String downFileName = AppUpdateUtils.getDownFileName(downloadUrl, updateFileType);
 
-        File appDir = new File(updateApp.getDownLoadFilePath());
+        File appDir = new File(downloadDir);
         if (!appDir.exists()) {
             appDir.mkdirs();
         }
 
-        String target = appDir + File.separator + updateApp.getVersion();
+        String target = appDir + File.separator + versionName;
 
-        httpManager.download(apkUrl, target, downFileName, new FileDownloadCallBack(callback));
+        httpManager.download(downloadUrl, target, downFileName, new FileDownloadCallBack(callback));
     }
 
     private void stop(String contentText) {
@@ -225,12 +224,13 @@ public class DownloadService extends Service {
         /**
          * 开始下载
          *
-         * @param updateApp 新app信息
-         * @param callback  下载回调
+         * @param downloadUrl 下载链接
+         * @param callback    下载回调
          */
-        public void start(UpdateBean updateApp, HttpManager httpManager, DownloadCallback callback) {
+        public void start(String downloadUrl, String downloadDir, int updateFileType, String versionName,
+                          HttpManager httpManager, DownloadCallback callback) {
             //下载
-            startDownload(updateApp, httpManager, callback);
+            startDownload(downloadUrl, downloadDir, updateFileType, versionName, httpManager, callback);
         }
 
         public void stop(String msg, HttpManager httpManager) {

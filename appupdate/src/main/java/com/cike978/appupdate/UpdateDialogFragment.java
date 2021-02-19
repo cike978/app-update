@@ -31,38 +31,69 @@ import androidx.core.app.ActivityCompat;
 import androidx.fragment.app.DialogFragment;
 import androidx.fragment.app.FragmentManager;
 
-import com.cike978.appupdate.bean.ApkUpdateBean;
-import com.cike978.appupdate.bean.ResUpdateBean;
-import com.cike978.appupdate.bean.UpdateBean;
+import com.cike978.appupdate.bean.AppVersionInfo;
+import com.cike978.appupdate.bean.ResVersionInfo;
 import com.cike978.appupdate.bean.UpdateConfig;
-import com.cike978.appupdate.callback.UpdateCallBack;
+import com.cike978.appupdate.bean.VersionDTO;
+import com.cike978.appupdate.callback.DialogUpdateCallBack;
 import com.cike978.appupdate.service.DownloadService;
+import com.cike978.appupdate.uitls.AppUpdateUtils;
 import com.cike978.appupdate.uitls.ColorUtil;
 import com.cike978.appupdate.uitls.DrawableUtil;
-import com.cike978.appupdate.uitls.AppUpdateUtils;
+import com.cike978.appupdate.uitls.FileSizeUtil;
+import com.cike978.appupdate.uitls.ResUtil;
+import com.cike978.appupdate.uitls.UpdateTypeEnum;
 import com.cike978.appupdate.view.NumberProgressBar;
 
 import java.io.File;
 
 /**
- * Created by Vector
- * on 2017/7/19 0019.
+ * 应用升级弹框
+ *
+ * @author yqs
  */
-
 public class UpdateDialogFragment extends DialogFragment implements View.OnClickListener {
     public static final String TIPS = "请授权访问存储空间权限，否则App无法更新";
     public static boolean isShow = false;
 
+    /**
+     * 更新说明
+     */
     private TextView mContentTextView;
+    //升级按钮
     private Button mUpdateOkButton;
-    private UpdateBean mUpdateApp;
-    private UpdateConfig updateConfig;
+    //进度条
     private NumberProgressBar mNumberProgressBar;
+    //关闭按钮
     private ImageView mIvClose;
+    //标题
     private TextView mTitleTextView;
 
-    private UpdateCallBack updateCallBack;
+    private VersionDTO versionDTO;
+    private AppVersionInfo appVersionInfo;
+    private ResVersionInfo resVersionInfo;
+    private UpdateConfig updateConfig;
+    private DialogUpdateCallBack dialogUpdateCallBack;
+
+    /**
+     * 是否在后台下载
+     */
     private boolean isBackgroundDownload;
+
+    /**
+     * 是否静默下载，表示弹框时进度条开始走
+     */
+    private boolean isSilentDownload;
+    /**
+     * 升级的文件类型 app或者资源文件
+     */
+    private int updateFileType;
+
+
+    /**
+     * 升级类型，一般 静默 强制等
+     */
+    int updateType = UpdateTypeEnum.PUBLIC.getCode();
 
 
     /**
@@ -89,8 +120,8 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     private Activity mActivity;
 
 
-    public void setUpdateCallBack(UpdateCallBack updateCallBack) {
-        this.updateCallBack = updateCallBack;
+    public void setDialogUpdateCallBack(DialogUpdateCallBack dialogUpdateCallBack) {
+        this.dialogUpdateCallBack = dialogUpdateCallBack;
     }
 
 
@@ -121,13 +152,17 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             public boolean onKey(DialogInterface dialog, int keyCode, KeyEvent event) {
                 if (keyCode == KeyEvent.KEYCODE_BACK) {
                     //禁用
-                    if (mUpdateApp != null && mUpdateApp.getForceUpdate()) {
+                    if (updateType == UpdateTypeEnum.FORCE.getCode()) {
                         //返回桌面
                         startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
                         return true;
                     } else {
-                        excuteIgnoreCallbackOrBackgroundDownTip();
-                        return false;
+//                        excuteIgnoreCallbackOrBackgroundDownTip();
+//                        return false;
+                        //fixme 不允许后台下载 以后可能会修改
+                        //返回桌面
+                        startActivity(new Intent(Intent.ACTION_MAIN).addCategory(Intent.CATEGORY_HOME));
+                        return true;
                     }
                 }
                 return false;
@@ -181,20 +216,41 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
     }
 
     private void initData() {
-        mUpdateApp = (UpdateBean) getArguments().getSerializable(AppVersionManager.INTENT_KEY);
+        versionDTO = (VersionDTO) getArguments().getSerializable(AppVersionManager.INTENT_KEY);
         updateConfig = (UpdateConfig) getArguments().getSerializable(AppVersionManager.UPDATECONFIG_KEY);
         isBackgroundDownload = getArguments().getBoolean(AppVersionManager.BACK_DOWN_KEY, false);
+        updateFileType = getArguments().getInt(AppVersionManager.UPDAGE_FILE_TYPE, 0);
+
+        appVersionInfo = versionDTO.getAppVersion();
+        resVersionInfo = versionDTO.getResVersion();
         //设置主题色
         initTheme();
+        //弹出对话框
+        String dialogTitle = "";
+        String newVersion = "";
+        String targetSize = "";
+        String updateLog = "";
+        updateType = UpdateTypeEnum.PUBLIC.getCode();
+        if (versionDTO != null) {
+            if (updateFileType == AppVersionManager.TYPE_FILE_APP) {
+                newVersion = appVersionInfo.getAppVersion();
+                targetSize = FileSizeUtil.FormetFileSize(appVersionInfo.getAppFileList().get(0).getFileSize()) + "";
+                updateLog = appVersionInfo.getVersionDescription();
+                updateType = appVersionInfo.getUpdateType();
+                dialogTitle = "应用升级";
 
-        if (mUpdateApp != null) {
-            //弹出对话框
-            final String dialogTitle = mUpdateApp.getTitle();
-            final String newVersion = mUpdateApp.getVersion();
-            final String targetSize = mUpdateApp.getTargetSize();
-            final String updateLog = mUpdateApp.getUpdateNote();
+                isSilentDownload = updateType == UpdateTypeEnum.SILENCE.getCode();
+            } else if (updateFileType == AppVersionManager.TYPE_FILE_RES) {
+                newVersion = resVersionInfo.getResVersion();
+                targetSize = FileSizeUtil.FormetFileSize(resVersionInfo.getResFileList().get(0).getFileSize()) + "";
+                updateLog = resVersionInfo.getVersionDescription();
+                updateType = resVersionInfo.getUpdateType();
+                dialogTitle = "资源文件升级";
+                isSilentDownload = updateType == UpdateTypeEnum.SILENCE.getCode();
+            }
 
-            String msg = "";
+
+            String msg = "版本：" + newVersion + "\n";
             if (!TextUtils.isEmpty(targetSize)) {
                 msg = "新版本大小：" + targetSize + "\n\n";
             }
@@ -206,13 +262,18 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             //标题
             mTitleTextView.setText(TextUtils.isEmpty(dialogTitle) ? String.format("是否升级到%s版本？", newVersion) : dialogTitle);
             //强制更新
-            if (mUpdateApp.getForceUpdate()) {
+            if (updateType == UpdateTypeEnum.FORCE.getCode()) {
                 mLlClose.setVisibility(View.GONE);
             } else {
                 //不是强制更新时，才生效
-                if (mUpdateApp.isShowIgnoreView()) {
+                if (updateType == UpdateTypeEnum.PUBLIC.getCode()) {
                     mIgnoreTextView.setVisibility(View.VISIBLE);
                 }
+            }
+
+            //静默下载也不显示关闭按钮
+            if (isSilentDownload) {
+                mLlClose.setVisibility(View.GONE);
             }
 
             initEvents();
@@ -265,7 +326,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
      */
     private void setDialogTheme(int color, int topResId) {
         mTopIv.setImageResource(topResId);
-        mUpdateOkButton.setBackgroundDrawable(DrawableUtil.getDrawable(AppUpdateUtils.dip2px(4, getActivity()), color));
+        mUpdateOkButton.setBackground(DrawableUtil.getDrawable(AppUpdateUtils.dip2px(4, getActivity()), color));
         mNumberProgressBar.setProgressTextColor(color);
         mNumberProgressBar.setReachedBarColor(color);
         //随背景颜色变化
@@ -276,6 +337,11 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         mUpdateOkButton.setOnClickListener(this);
         mIvClose.setOnClickListener(this);
         mIgnoreTextView.setOnClickListener(this);
+
+        //静默下载的时候相当于直接点击了下载按钮
+        if (isSilentDownload) {
+            mUpdateOkButton.performClick();
+        }
     }
 
     @Override
@@ -295,7 +361,6 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 }
             } else {
                 beforeDownloadFile();
-
             }
 
         } else if (i == R.id.iv_close) {
@@ -303,7 +368,6 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             excuteIgnoreCallbackOrBackgroundDownTip();
             dismiss();
         } else if (i == R.id.tv_ignore) {
-//            AppUpdateUtils.saveIgnoreVersion(getActivity(), mUpdateApp.getVersion());
             excuteIgnoreCallbackOrBackgroundDownTip();
             dismiss();
         }
@@ -313,17 +377,18 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
      * 执行忽略版本升级的回调或者后台下载的提示
      */
     public void excuteIgnoreCallbackOrBackgroundDownTip() {
-        if (mDownloadBinder != null) {
-            //表示已经开始下载了
-            Toast.makeText(getActivity().getApplicationContext(), "正在后台下载文件...", Toast.LENGTH_SHORT).show();
-            return;
-        }
+        //fixme 目前没有后台下载
+//        if (mDownloadBinder != null) {
+//            //表示已经开始下载了
+//            Toast.makeText(getActivity().getApplicationContext(), "正在后台下载...", Toast.LENGTH_SHORT).show();
+//            return;
+//        }
 
-        if (updateCallBack != null) {
-            if (mUpdateApp instanceof ApkUpdateBean) {
-                updateCallBack.ignoreUpdateApk();
+        if (dialogUpdateCallBack != null) {
+            if (updateFileType == AppVersionManager.TYPE_FILE_APP) {
+                dialogUpdateCallBack.ignoreUpdateApk();
             } else {
-                updateCallBack.ignoreUpdateRes();
+                dialogUpdateCallBack.ignoreUpdateRes();
             }
         }
     }
@@ -331,15 +396,15 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
 
     public void cancelDownloadService() {
         if (mDownloadBinder != null) {
-            // 标识用户已经点击了更新，之后点击取消
-            mDownloadBinder.stop("取消下载",updateConfig.getHttpManager());
+            // 表示用户已经点击了更新，之后点击取消
+            mDownloadBinder.stop("取消下载", updateConfig.getHttpManager());
         }
-        getActivity().getApplicationContext().unbindService(conn);
     }
 
     private void beforeDownloadFile() {
         downloadApp();
-        if (isBackgroundDownload) {
+        //只有app下载可以放到后台
+        if (isBackgroundDownload && updateFileType == AppVersionManager.TYPE_FILE_APP) {
             dismiss();
         }
     }
@@ -365,11 +430,8 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
      * 开启后台服务下载
      */
     private void downloadApp() {
-        //使用ApplicationContext延长他的生命周期
-//        DownloadService.bindService(getActivity().getApplicationContext(), conn);
-        DownloadService.bindService(getActivity().getApplicationContext(), conn);
+        DownloadService.bindService(getActivity(), conn);
         mIgnoreTextView.setVisibility(View.GONE);
-
     }
 
     /**
@@ -377,84 +439,114 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
      */
     private void startDownloadApp(DownloadService.DownloadBinder binder) {
         // 开始下载，监听下载进度，可以用对话框显示
-        if (mUpdateApp != null) {
+        if (versionDTO != null) {
 
             this.mDownloadBinder = binder;
+            String downloadUrl = "";
+            String newVersion = "version";
+            if (updateFileType == AppVersionManager.TYPE_FILE_APP) {
+                newVersion = appVersionInfo.getAppVersion();
+                downloadUrl = updateConfig.getDownloadServerUrl() + "/common/sysFile/download/" + appVersionInfo.getAppFileList().get(0).getObjectName();
+            } else if (updateFileType == AppVersionManager.TYPE_FILE_RES) {
+                newVersion = resVersionInfo.getResVersion();
+                downloadUrl = updateConfig.getDownloadServerUrl() + "/common/sysFile/download/" + resVersionInfo.getResFileList().get(0).getObjectName();
 
-            binder.start(mUpdateApp, updateConfig.getHttpManager(), new DownloadService.DownloadCallback() {
-                @Override
-                public void onStart() {
-                    if (!UpdateDialogFragment.this.isRemoving()) {
-                        mNumberProgressBar.setVisibility(View.VISIBLE);
-                        mUpdateOkButton.setVisibility(View.GONE);
-                    }
-                }
+            }
 
-                @Override
-                public void onProgress(float progress, long totalSize) {
-                    if (!UpdateDialogFragment.this.isRemoving()) {
-                        mNumberProgressBar.setProgress(Math.round(progress * 100));
-                        mNumberProgressBar.setMax(100);
-                    }
-                }
 
-                @Override
-                public void setMax(long total) {
-
-                }
-
-                //TODO 这里的 onFinish 和 onInstallAppAndAppOnForeground 会有功能上的重合，后期考虑合并优化。
-                @Override
-                public boolean onFinish(final File file) {
-                    if (!UpdateDialogFragment.this.isRemoving()) {
-
-                        //资源文件升级
-                        if (mUpdateApp instanceof ResUpdateBean) {
-
-                            if (updateCallBack != null) {
-                                updateCallBack.downLoadResFinish(file.getAbsolutePath(), (ResUpdateBean) mUpdateApp);
+            binder.start(downloadUrl, updateConfig.getDownloadDirPath(), updateFileType, newVersion,
+                    updateConfig.getHttpManager(), new DownloadService.DownloadCallback() {
+                        @Override
+                        public void onStart() {
+                            if (!UpdateDialogFragment.this.isRemoving()) {
+                                mNumberProgressBar.setVisibility(View.VISIBLE);
+                                mUpdateOkButton.setVisibility(View.GONE);
                             }
-                            //关闭弹框
-                            dismissAllowingStateLoss();
+                        }
+
+                        @Override
+                        public void onProgress(float progress, long totalSize) {
+                            if (!UpdateDialogFragment.this.isRemoving()) {
+                                mNumberProgressBar.setProgress(Math.round(progress * 100));
+                                mNumberProgressBar.setMax(100);
+                            }
+                        }
+
+                        @Override
+                        public void setMax(long total) {
+
+                        }
+
+                        //TODO 这里的 onFinish 和 onInstallAppAndAppOnForeground 会有功能上的重合，后期考虑合并优化。
+                        @Override
+                        public boolean onFinish(final File file) {
+                            if (!UpdateDialogFragment.this.isRemoving()) {
+
+                                //资源文件升级
+                                if (updateFileType == AppVersionManager.TYPE_FILE_RES) {
+
+                                    if (dialogUpdateCallBack != null) {
+                                        boolean isConsume = dialogUpdateCallBack.downLoadResFinish(file.getAbsolutePath(), resVersionInfo);
+                                        if (isConsume == false) {
+                                            //未被消费，交给代码实现资源包解压缩的相关操作
+                                            new Thread(new Runnable() {
+                                                @Override
+                                                public void run() {
+                                                    //fixme targetdir目前还未用到，多资源文件会用到
+                                                    boolean isUnzipSuccess = ResUtil
+                                                            .unzipResFile(file.getAbsolutePath(), null, updateConfig);
+                                                    if (dialogUpdateCallBack != null) {
+                                                        if (isUnzipSuccess) {
+                                                            dialogUpdateCallBack.resUnzipFinish(true);
+                                                        } else {
+                                                            dialogUpdateCallBack.resUnzipFinish(false);
+                                                        }
+                                                    }
+                                                }
+                                            }).start();
+                                        }
+                                    }
+                                    //关闭弹框
+                                    dismissAllowingStateLoss();
+                                    return true;
+                                }
+
+                                //app升级
+                                if (updateType == UpdateTypeEnum.FORCE.getCode()) {
+                                    showInstallBtn(file);
+                                } else {
+                                    dismissAllowingStateLoss();
+                                }
+                            }
+                            //一般返回 true ，当返回 false 时，则下载，不安装，为静默安装使用。
                             return true;
                         }
 
-                        //app升级
-                        if (mUpdateApp.getForceUpdate()) {
-                            showInstallBtn(file);
-                        } else {
-                            dismissAllowingStateLoss();
+                        @Override
+                        public void onError(String msg) {
+                            if (!UpdateDialogFragment.this.isRemoving()) {
+                                dismissAllowingStateLoss();
+                            }
                         }
-                    }
-                    //一般返回 true ，当返回 false 时，则下载，不安装，为静默安装使用。
-                    return true;
-                }
 
-                @Override
-                public void onError(String msg) {
-                    if (!UpdateDialogFragment.this.isRemoving()) {
-                        dismissAllowingStateLoss();
-                    }
-                }
-
-                @Override
-                public boolean onInstallAppAndAppOnForeground(File file) {
-                    //这样做的目的是在跳转安装界面，可以监听到用户取消安装的动作;
-                    //activity.startActivityForResult(intent, REQ_CODE_INSTALL_APP);
-                    //但是如果 由DownloadService 跳转到安装界面，则监听失效。
-                    if (!mUpdateApp.getForceUpdate()) {
-                        dismiss();
-                    }
-                    if (mActivity != null) {
-                        AppUpdateUtils.installApp(mActivity, file);
-                        //返回 true ，自己处理。
-                        return true;
-                    } else {
-                        //返回 flase ，则由 DownloadService 跳转到安装界面。
-                        return false;
-                    }
-                }
-            });
+                        @Override
+                        public boolean onInstallAppAndAppOnForeground(File file) {
+                            //这样做的目的是在跳转安装界面，可以监听到用户取消安装的动作;
+                            //activity.startActivityForResult(intent, REQ_CODE_INSTALL_APP);
+                            //但是如果 由DownloadService 跳转到安装界面，则监听失效。
+                            if (updateType != UpdateTypeEnum.FORCE.getCode()) {
+                                dismiss();
+                            }
+                            if (mActivity != null) {
+                                AppUpdateUtils.installApp(mActivity, file);
+                                //返回 true ，自己处理。
+                                return true;
+                            } else {
+                                //返回 flase ，则由 DownloadService 跳转到安装界面。
+                                return false;
+                            }
+                        }
+                    });
         }
     }
 
@@ -471,27 +563,6 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
         });
     }
 
-
-//    @Override
-//    public void onActivityResult(int requestCode, int resultCode, Intent data) {
-//        Log.e("", "对话框 requestCode = [" + requestCode + "], resultCode = [" + resultCode + "], data = [" + data + "]");
-//        switch (resultCode) {
-//            case Activity.RESULT_CANCELED:
-//                switch (requestCode){
-//                    // 得到通过UpdateDialogFragment默认dialog方式安装，用户取消安装的回调通知，以便用户自己去判断，比如这个更新如果是强制的，但是用户下载之后取消了，在这里发起相应的操作
-//                    case AppUpdateUtils.REQ_CODE_INSTALL_APP:
-//                        if (mUpdateApp.isConstraint()) {
-//                            if (AppUpdateUtils.appIsDownloaded(mUpdateApp)) {
-//                                AppUpdateUtils.installApp(UpdateDialogFragment.this, AppUpdateUtils.getAppFile(mUpdateApp));
-//                            }
-//                        }
-//                        break;
-//                }
-//                break;
-//
-//            default:
-//        }
-//    }
 
     @Override
     public void show(FragmentManager manager, String tag) {

@@ -23,6 +23,7 @@ import androidx.annotation.NonNull;
 import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
+import com.cike978.appupdate.AppVersionManager;
 import com.cike978.appupdate.bean.ApkUpdateBean;
 import com.cike978.appupdate.bean.UpdateBean;
 
@@ -54,10 +55,9 @@ public class AppUpdateUtils {
 
 
     @NonNull
-    public static String getDownFileName(UpdateBean updateAppBean) {
-        String url = updateAppBean.getDownloadUrl();
-        String fileName = url.substring(url.lastIndexOf("/") + 1, url.length());
-        if (updateAppBean instanceof ApkUpdateBean) {
+    public static String getDownFileName(String downloadUrl, int updateFileType) {
+        String fileName = downloadUrl.substring(downloadUrl.lastIndexOf("/") + 1, downloadUrl.length());
+        if (updateFileType == AppVersionManager.TYPE_FILE_APP) {
             if (!fileName.endsWith(".apk")) {
                 fileName = "temp.apk";
             }

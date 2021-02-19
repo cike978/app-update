@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--    https://blog.csdn.net/hehongdan/article/details/103168380-->
+    <!--Android P 限制了明文流量的网络请求，非加密的流量请求都会被系统禁止掉,这个 exml为了解决此问题-->
+
+<!--    默认情况下，Android 7 +(Nougat, Oreo and Pie)所使用的信任锚将是预先安装的系统CA证书，称为“system（系统）-->
+<!--    在Android 6 (Marshmallow)及其以下的，默认的信任锚还将包括用户安装的证书，称为“user（用户）-->
+<network-security-config>
+    <base-config cleartextTrafficPermitted="true" >
+        <trust-anchors>
+            <certificates src="system" />
+        </trust-anchors>
+    </base-config>
+
+</network-security-config>
+
+
+
+<!--以下配置表示默认允许明文传输，但是只信任系统证书，这样子fiddler是无法抓包的，对于配置的includeSubdomains，这些域名不允许明文传输-->
+<!--<network-security-config>-->
+<!--<base-config cleartextTrafficPermitted="true">-->
+<!--    <trust-anchors>-->
+<!--        <certificates src="system" />-->
+<!--    </trust-anchors>-->
+<!--</base-config>-->
+<!--<domain-config cleartextTrafficPermitted="false">-->
+<!--    <domain includeSubdomains="true">mobile-api.coinmarketcap.com</domain>-->
+<!--    <domain includeSubdomains="true">blog.coinmarketcap.com</domain>-->
+<!--    <domain includeSubdomains="true">portal-api.coinmarketcap.com</domain>-->
+<!--    <domain includeSubdomains="true">pro.coinmarketcap.com</domain>-->
+<!--</domain-config>-->
+<!--</network-security-config>-->
+

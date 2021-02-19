@@ -11,7 +11,7 @@
         <item name="progress_unreached_color">#CCCCCC</item>
         <item name="progress_reached_color">#e94339</item>
 
-        <item name="progress_text_size">12sp</item>
+        <item name="progress_text_size">12dp</item>
         <item name="progress_text_color">#e94339</item>
 
         <item name="progress_reached_bar_height">4dp</item>

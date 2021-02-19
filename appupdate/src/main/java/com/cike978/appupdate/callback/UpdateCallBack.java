@@ -1,22 +1,15 @@
 package com.cike978.appupdate.callback;
 
-import com.cike978.appupdate.bean.ResUpdateBean;
+import com.cike978.appupdate.bean.ResVersionInfo;
+import com.cike978.appupdate.bean.VersionDTO;
 
 /**
  * Created by yqs97.
  * Date: 2020/8/21
  * Time: 16:03
  */
-public interface UpdateCallBack {
+public interface UpdateCallBack extends  DialogUpdateCallBack {
 
-    /**
-     * 资源文件下载完成
-     * @param resDownloadPath
-     * @param resUpdateBean
-     */
-    void downLoadResFinish(String resDownloadPath, ResUpdateBean resUpdateBean);
+   void checkVersionResult(boolean isSuccess, VersionDTO versionDTO);
 
-    void ignoreUpdateApk();
-
-    void ignoreUpdateRes();
 }

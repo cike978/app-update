@@ -1,8 +1,11 @@
 package com.yqs.appupdate;
 
+import android.content.Context;
+
 import androidx.annotation.NonNull;
 
 import com.cike978.appupdate.HttpManager;
+import com.cike978.appupdate.bean.VersionDTO;
 
 import java.io.File;
 
@@ -41,6 +44,10 @@ public class MyHttpManager implements HttpManager {
     @Override
     public void cancelDownLoad() {
         TCommonRequestManager.getInstance().cannelOkHttpRequest(TAG);
+    }
+
+    @Override
+    public void checkVersion(Context context, Callback<VersionDTO> callback) {
 
     }
 }

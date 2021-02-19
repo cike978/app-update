@@ -2,15 +2,16 @@ package com.cike978.appupdate;
 
 import android.app.Activity;
 import android.os.Bundle;
+import android.text.TextUtils;
 import android.util.Log;
 import android.widget.Toast;
 
 import androidx.fragment.app.FragmentActivity;
 
-import com.cike978.appupdate.bean.ApkUpdateBean;
-import com.cike978.appupdate.bean.ResUpdateBean;
-import com.cike978.appupdate.bean.UpdateBean;
+import com.cike978.appupdate.bean.ResVersionInfo;
 import com.cike978.appupdate.bean.UpdateConfig;
+import com.cike978.appupdate.bean.VersionDTO;
+import com.cike978.appupdate.callback.DialogUpdateCallBack;
 import com.cike978.appupdate.callback.UpdateCallBack;
 import com.cike978.appupdate.workflow.Node;
 import com.cike978.appupdate.workflow.WorkFlow;
@@ -24,12 +25,21 @@ import com.cike978.appupdate.workflow.Worker;
  * Time: 15:59
  */
 public class AppVersionManager {
+    private static final String TAG = "AppVersionManager";
 
     final static String INTENT_KEY = "update_dialog_values";
-
     final static String UPDATECONFIG_KEY = "update_config";
     final static String BACK_DOWN_KEY = "back_down";
+    final static String UPDAGE_FILE_TYPE = "update_file_type";
 
+    /**
+     * 更新文件类型-app
+     */
+    public final static int TYPE_FILE_APP = 1;
+    /**
+     * 更新文件类型-资源文件
+     */
+    public final static int TYPE_FILE_RES = 2;
     /**
      * 静默检查更新 没有loading和toast
      */
@@ -40,9 +50,13 @@ public class AppVersionManager {
     public static final int TYPE_MANUAL = 2;
 
     private Activity activity;
-
-    private ApkUpdateBean apkUpdateBean;
-    private ResUpdateBean resUpdateBean;
+    /**
+     * 版本信息
+     */
+    private VersionDTO versionDTO;
+    /**
+     * 升级配置信息
+     */
     private UpdateConfig updateConfig;
 
 
@@ -55,129 +69,205 @@ public class AppVersionManager {
      */
     private int checkType;
 
-    private  UpdateCallBack updateCallBack;
+    /**
+     * 升级回调
+     */
+    private UpdateCallBack updateCallBack;
 
     /**
      * 工作流
      */
     private WorkFlow workFlow = new WorkFlow.Builder().create();
 
-    public AppVersionManager() {
+
+    /**
+     * 是否有应用的更新
+     */
+    private boolean hasAppUpdate;
+
+    private AppVersionManager() {
+    }
+
+    /**
+     * 请求版本更新信息
+     *
+     * @return
+     */
+    public AppVersionManager requestCheckVersionInfo() {
+        //请求检查更新
+        workFlow.addNode(new WorkNode(0, new Worker() {
+            @Override
+            public void doWork(final Node current) {
+                //调用检查更新的代码
+                if (updateConfig == null) {
+                    throw new RuntimeException("未设置updateConfig");
+                }
+
+                updateConfig.getHttpManager().checkVersion(activity, new HttpManager.Callback<VersionDTO>() {
+                    @Override
+                    public void onResponse(VersionDTO versionDTOResult) {
+                        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+                            return;
+                        }
+                        versionDTO = versionDTOResult;
+                        if (updateCallBack != null) {
+                            updateCallBack.checkVersionResult(true, versionDTOResult);
+                        }
+                        current.onCompleted();
+                    }
+
+                    @Override
+                    public void onError(String error) {
+                        Log.e(TAG, error);
+                        if (activity == null || activity.isDestroyed() || activity.isFinishing()) {
+                            return;
+                        }
+                        error = TextUtils.isEmpty(error) ?
+                                activity.getString(R.string.app_update_checkversion_fail) : error;
+                        Toast.makeText(activity.getApplicationContext(), error, Toast.LENGTH_SHORT).show();
+                        //不用继续走工作流了
+                        if (updateCallBack != null) {
+                            updateCallBack.checkVersionResult(true, null);
+                        }
+                        workFlow.dispose();
+                    }
+                });
+            }
+        }));
+        return this;
     }
 
 
+    /**
+     * 更新应用
+     *
+     * @return
+     */
     public AppVersionManager updateApk() {
         if (hasNewApkVersion()) {
+            hasAppUpdate = true;
             workFlow.addNode(new WorkNode(1, new Worker() {
                 @Override
                 public void doWork(Node current) {
-                    showDialogFragment(apkUpdateBean, current);
+                    showDialogFragment(TYPE_FILE_APP, current);
+                }
+            }));
+        }
+        return this;
+    }
+
+    /**
+     * 更新资源文件
+     *
+     * @return
+     */
+    public AppVersionManager updateRes() {
+        if (hasNewResVersion()) {
+            workFlow.addNode(new WorkNode(2, new Worker() {
+                @Override
+                public void doWork(Node current) {
+                    showDialogFragment(TYPE_FILE_RES, current);
                 }
             }));
         } else {
-            workFlow.addNode(new WorkNode(1, new Worker() {
-                @Override
-                public void doWork(Node current) {
-                    current.onCompleted();
-                }
-            }));
-            if (checkType == TYPE_MANUAL) {
+            if (checkType == TYPE_MANUAL && !hasAppUpdate) {
+                //手动检查更新，并且没有应用和资源文件更新的时候，toast提示一下
                 Toast.makeText(activity.getApplicationContext(), R.string.app_update_is_latest_version, Toast.LENGTH_SHORT).show();
             }
         }
         return this;
     }
 
-
-    public AppVersionManager updateRes() {
-        if (hasNewResVersion()) {
-            workFlow.addNode(new WorkNode(2, new Worker() {
-                @Override
-                public void doWork(Node current) {
-                    showDialogFragment(resUpdateBean, current);
-                }
-            }));
-
-        } else {
-            if (checkType == TYPE_MANUAL) {
-//                Toast.makeText(activity.getApplicationContext(), R.string.app_update_is_latest_version, Toast.LENGTH_SHORT).show();
-            }
-        }
-        return this;
-    }
-
+    /**
+     * 开始工作流
+     */
     public void start() {
         workFlow.start();
     }
 
     /**
-     * 跳转到更新页面
+     * 显示更新弹框
+     *
+     * @param fileType 更新文件类型
+     * @param current  工作流节点
      */
-    public void showDialogFragment(final UpdateBean updateBean, final Node current) {
+    public void showDialogFragment(int fileType, final Node current) {
         if (activity != null && !activity.isFinishing()) {
             Bundle bundle = new Bundle();
-            bundle.putSerializable(INTENT_KEY, updateBean);
+            bundle.putSerializable(INTENT_KEY, versionDTO);
 
             if (updateConfig == null) {
                 throw new RuntimeException("未设置updateConfig");
             }
             bundle.putSerializable(UPDATECONFIG_KEY, updateConfig);
             bundle.putBoolean(BACK_DOWN_KEY, isBackgroundDownload);
+            bundle.putInt(UPDAGE_FILE_TYPE, fileType);
 
-
-            UpdateDialogFragment updateDialogFragment = UpdateDialogFragment
-                    .newInstance(bundle);
-
-            updateDialogFragment.setUpdateCallBack(new UpdateCallBack() {
+            UpdateDialogFragment updateDialogFragment = UpdateDialogFragment.newInstance(bundle);
+            updateDialogFragment.setDialogUpdateCallBack(new DialogUpdateCallBack() {
                 @Override
-                public void downLoadResFinish(String resDownloadPath, ResUpdateBean resUpdateBean) {
-                    Log.e("tag", "downLoadResFinish");
+                public boolean downLoadResFinish(String resDownloadPath, ResVersionInfo resVersionInfo) {
+                    Log.e(TAG, "资源文件下载完成" + resDownloadPath);
                     current.onCompleted();
-                    if (updateCallBack!=null){
-                        updateCallBack.downLoadResFinish(resDownloadPath,resUpdateBean);
+                    if (updateCallBack != null) {
+                        return updateCallBack.downLoadResFinish(resDownloadPath, resVersionInfo);
                     }
+                    return false;
+                }
+
+                @Override
+                public void resUnzipFinish(boolean isSuccess) {
+                    Log.e(TAG, "resUnzipFinish：" + isSuccess);
+                    if (updateCallBack != null) {
+                        updateCallBack.resUnzipFinish(isSuccess);
+                    }
+                    current.onCompleted();
                 }
 
                 @Override
                 public void ignoreUpdateApk() {
-                    Log.e("tag", "ignoreUpdateApk");
-                    if (updateCallBack!=null){
+                    Log.e(TAG, "忽略应用升级");
+                    if (updateCallBack != null) {
                         updateCallBack.ignoreUpdateApk();
                     }
                     current.onCompleted();
-
                 }
 
                 @Override
                 public void ignoreUpdateRes() {
-                    Log.e("tag", "ignoreUpdateRes");
-                    current.onCompleted();
-                    if (updateCallBack!=null){
+                    Log.e(TAG, "忽略资源文件升级");
+                    if (updateCallBack != null) {
                         updateCallBack.ignoreUpdateRes();
                     }
-
+                    current.onCompleted();
                 }
             });
-            updateDialogFragment.show(((FragmentActivity) activity).getSupportFragmentManager(), "dialog");
+            updateDialogFragment.show(((FragmentActivity) activity).getSupportFragmentManager(), "updateDialogFragment");
         }
-
     }
 
-
-    public boolean hasNewApkVersion() {
-        return updateConfig.getVersionCompare().hasNewVersionApk(activity.getApplicationContext(), apkUpdateBean);
+    /**
+     * 是否有应用更新
+     *
+     * @return
+     */
+    private boolean hasNewApkVersion() {
+        return versionDTO.getAppVersionErrorCode() == 0;
     }
 
-
-    public boolean hasNewResVersion() {
-        return updateConfig.getVersionCompare().hasNewVersionRes(activity.getApplicationContext(), resUpdateBean);
+    /**
+     * 是否有资源文件更新
+     *
+     * @return
+     */
+    private boolean hasNewResVersion() {
+        return versionDTO.getResVersionErrorCode() == 0;
     }
 
 
     public static final class Builder {
         private Activity activity;
-        private ApkUpdateBean apkUpdateBean;
-        private ResUpdateBean resUpdateBean;
+        private VersionDTO versionDTO;
         private UpdateConfig updateConfig;
         private int checkType = TYPE_SILENCE;
         /**
@@ -198,13 +288,8 @@ public class AppVersionManager {
             return this;
         }
 
-        public Builder withApkUpdateBean(ApkUpdateBean apkUpdateBean) {
-            this.apkUpdateBean = apkUpdateBean;
-            return this;
-        }
-
-        public Builder withResUpdateBean(ResUpdateBean resUpdateBean) {
-            this.resUpdateBean = resUpdateBean;
+        public Builder withVersionDTO(VersionDTO versionDTO) {
+            this.versionDTO = versionDTO;
             return this;
         }
 
@@ -223,19 +308,20 @@ public class AppVersionManager {
             this.isBackgroundDownload = isBackgroundDownload;
             return this;
         }
+
         public Builder withUpdateCallBack(UpdateCallBack updateCallBack) {
             this.updateCallBack = updateCallBack;
             return this;
         }
+
         public AppVersionManager build() {
             AppVersionManager appVersionManager = new AppVersionManager();
             appVersionManager.activity = this.activity;
-            appVersionManager.apkUpdateBean = this.apkUpdateBean;
-            appVersionManager.resUpdateBean = this.resUpdateBean;
             appVersionManager.checkType = this.checkType;
             appVersionManager.isBackgroundDownload = this.isBackgroundDownload;
             appVersionManager.updateConfig = this.updateConfig;
             appVersionManager.updateCallBack = this.updateCallBack;
+            appVersionManager.versionDTO = this.versionDTO;
             return appVersionManager;
         }
     }

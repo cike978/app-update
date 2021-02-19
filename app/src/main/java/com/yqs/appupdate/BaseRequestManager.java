@@ -701,12 +701,13 @@ public abstract class BaseRequestManager {
                     FileUtils.rename(tempdownFile, downFileName);
                     successCallBack(downloadedFile, callBack);
                 } catch (Exception e) {
-                    e.printStackTrace();
+//                    e.printStackTrace();
                     if (e instanceof SocketException) {
-                        if ("Socket is closed".equals(e.getMessage())) {
+                        if (e.toString().contains("closed") || "java.io.IOException: Canceled".equals(e.toString())) {
                             Log.e(TAG, "用户取消了下载");
                             return;
                         }
+
                     }
                     failedCallBack(response.code(), "下载失败", callBack);
                 } finally {

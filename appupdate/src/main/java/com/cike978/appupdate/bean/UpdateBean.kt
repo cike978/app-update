@@ -8,6 +8,8 @@ import java.io.Serializable
  * Date: 2020/8/21
  * Time: 15:02
  */
+@Deprecated("弃用")
+
 abstract class UpdateBean : Serializable {
     companion object {
         val TYPE_APP = "apk"
