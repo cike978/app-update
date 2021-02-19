@@ -2,6 +2,10 @@
 <resources>
     <string name="app_update_is_latest_version">当前已经是最新版本</string>
     <string name="app_update_checkversion_fail">检查版本失败!</string>
+    <string name="app_update_dialog_title">提示</string>
+    <string name="app_update_text_confirm">确定</string>
+    <string name="app_update_text_cancel">确定</string>
+    <string name="app_update_text_storage_rationale">请授权访问存储空间权限，否则App无法更新</string>
 
 
 

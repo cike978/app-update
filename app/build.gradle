@@ -25,7 +25,7 @@ android {
     }
     packagingOptions {
         //解决More than one file was found with OS independent path 'META-INF/INDEX.LIST'
-        exclude 'META-INF/INDEX.LIST'
+//        exclude 'META-INF/INDEX.LIST'
     }
 }
 

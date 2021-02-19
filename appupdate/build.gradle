@@ -34,7 +34,8 @@ dependencies {
 
    // 只在编译时有效，不会参与打包
     compileOnly 'com.google.code.gson:gson:2.8.6'
-    implementation  'org.apache.ant:ant:1.10.9'
+//    implementation  'org.apache.ant:ant:1.10.9'
+    implementation  'org.apache.ant:ant:1.7.1'
 
 
     testImplementation 'junit:junit:4.12'

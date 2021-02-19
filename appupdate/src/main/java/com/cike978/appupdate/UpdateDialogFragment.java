@@ -2,6 +2,7 @@ package com.cike978.appupdate;
 
 import android.Manifest;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -53,7 +54,6 @@ import java.io.File;
  * @author yqs
  */
 public class UpdateDialogFragment extends DialogFragment implements View.OnClickListener {
-    public static final String TIPS = "请授权访问存储空间权限，否则App无法更新";
     public static boolean isShow = false;
 
     /**
@@ -353,8 +353,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             int flag = ActivityCompat.checkSelfPermission(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE);
             if (flag != PackageManager.PERMISSION_GRANTED) {
                 if (ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
-                    // 用户拒绝过这个权限了，应该提示用户，为什么需要这个权限。
-                    Toast.makeText(getActivity(), TIPS, Toast.LENGTH_LONG).show();
+                    showTipDialog();
                 } else {
                     // 申请授权。
                     requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
@@ -371,6 +370,25 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
             excuteIgnoreCallbackOrBackgroundDownTip();
             dismiss();
         }
+    }
+
+    private void showTipDialog() {
+        // 用户拒绝过这个权限了，应该提示用户，为什么需要这个权限。
+        new AlertDialog.Builder(getActivity())
+                .setMessage(R.string.app_update_text_storage_rationale)
+                .setTitle(R.string.app_update_dialog_title)
+                .setNegativeButton(R.string.app_update_text_cancel, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dismiss();
+                    }
+                }).setPositiveButton(R.string.app_update_text_confirm, new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                requestPermissions(new String[]{Manifest.permission.WRITE_EXTERNAL_STORAGE}, 1);
+
+            }
+        }).show();
     }
 
     /**
@@ -417,13 +435,14 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                 //升级
                 beforeDownloadFile();
             } else {
-                //提示，并且关闭
-                Toast.makeText(getActivity(), TIPS, Toast.LENGTH_LONG).show();
-                dismiss();
-
+                //当不允许显示权限申请理由的时候表示被永久拒绝，提示用户打开设置页面
+                if (!ActivityCompat.shouldShowRequestPermissionRationale(getActivity(), Manifest.permission.WRITE_EXTERNAL_STORAGE)) {
+                    Toast.makeText(getActivity().getApplicationContext(), "请手动打开应用权限管理界面并设置允许读取手机存储", Toast.LENGTH_LONG).show();
+                } else {
+                    showTipDialog();
+                }
             }
         }
-
     }
 
     /**
