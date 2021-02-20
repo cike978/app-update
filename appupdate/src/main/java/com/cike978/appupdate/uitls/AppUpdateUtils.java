@@ -16,7 +16,6 @@ import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
-import android.text.TextUtils;
 import android.util.DisplayMetrics;
 
 import androidx.annotation.NonNull;
@@ -24,8 +23,6 @@ import androidx.core.content.FileProvider;
 import androidx.fragment.app.Fragment;
 
 import com.cike978.appupdate.AppVersionManager;
-import com.cike978.appupdate.bean.ApkUpdateBean;
-import com.cike978.appupdate.bean.UpdateBean;
 
 import java.io.File;
 import java.io.FileInputStream;

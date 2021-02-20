@@ -2,9 +2,7 @@ package com.cike978.appupdate;
 
 import android.content.Context;
 
-import com.cike978.appupdate.bean.ApkUpdateBean;
 import com.cike978.appupdate.bean.AppVersionInfo;
-import com.cike978.appupdate.bean.ResUpdateBean;
 import com.cike978.appupdate.bean.ResVersionInfo;
 import com.cike978.appupdate.uitls.AppUpdateUtils;
 import com.cike978.appupdate.uitls.VersionCompareUtils;

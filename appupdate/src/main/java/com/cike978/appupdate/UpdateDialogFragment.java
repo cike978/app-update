@@ -42,7 +42,7 @@ import com.cike978.appupdate.uitls.AppUpdateUtils;
 import com.cike978.appupdate.uitls.ColorUtil;
 import com.cike978.appupdate.uitls.DrawableUtil;
 import com.cike978.appupdate.uitls.FileSizeUtil;
-import com.cike978.appupdate.uitls.ResUtil;
+import com.cike978.appupdate.uitls.AppResZipUtil;
 import com.cike978.appupdate.uitls.UpdateTypeEnum;
 import com.cike978.appupdate.view.NumberProgressBar;
 
@@ -512,7 +512,7 @@ public class UpdateDialogFragment extends DialogFragment implements View.OnClick
                                                 @Override
                                                 public void run() {
                                                     //fixme targetdir目前还未用到，多资源文件会用到
-                                                    boolean isUnzipSuccess = ResUtil
+                                                    boolean isUnzipSuccess = AppResZipUtil
                                                             .unzipResFile(file.getAbsolutePath(), null, updateConfig);
                                                     if (dialogUpdateCallBack != null) {
                                                         if (isUnzipSuccess) {

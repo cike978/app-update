@@ -6,16 +6,14 @@ import com.cike978.appupdate.bean.UpdateConfig;
 
 import java.io.File;
 
-import kotlin.SuccessOrFailureKt;
-
 /**
  * 资源文件工具类
  * Created by yqs97.
  * Date: 2021/2/18
  * Time: 16:35
  */
-public class ResUtil {
-    private static final String TAG = "ResUtil";
+public class AppResZipUtil {
+    private static final String TAG = "AppResZipUtil";
     /**
      * 解压前备份你的资源名
      */
@@ -29,7 +27,7 @@ public class ResUtil {
      * @param filePath  下载的资源文件路径
      * @param targetDir 要解压到的目标目录
      */
-    public static  boolean unzipResFile(String filePath, String targetDir, UpdateConfig updateConfig) {
+    public static boolean unzipResFile(String filePath, String targetDir, UpdateConfig updateConfig) {
 
         //1.解压前先重命名之前的资源文件夹
         String resDir = updateConfig.getAppRootDir() + "/res";
