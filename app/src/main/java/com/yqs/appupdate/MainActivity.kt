@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
                 var params = hashMapOf("appId" to "IEFR4hnp")
 
                 TCommonRequestManager.getInstance().requestGetByAsyn(TAG,
-                    "http://192.168.137.1:8002/appstore/appversion/checkVersion", params,
+                    "http://mobile-devops.openserver.cn/devopsServer/appstore/appversion/checkVersion", params,
                     object : BaseRequestManager.ReqCallBack<String> {
                         override fun onReqSuccess(result: String?) {
                             var jsonObject = JSONObject(result);
@@ -37,7 +37,7 @@ class MainActivity : AppCompatActivity() {
 
                             var updateConfig: UpdateConfig = UpdateConfig();
                             updateConfig.setHttpManager(MyHttpManager())
-                            updateConfig.setDownloadServerUrl("http://192.168.137.1.137:8002/system")
+                            updateConfig.setDownloadServerUrl("http://mobile-devops.openserver.cn/devopsServer/system")
                             updateConfig.downloadDirPath =
                                 getExternalFilesDir(null)?.absolutePath.plus(".download")
                             AppVersionManager.Builder.anAppVersionManager().withActivity(instance)

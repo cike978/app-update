@@ -144,15 +144,19 @@ public class AppVersionManager {
      * @return
      */
     public AppVersionManager updateApk() {
-        if (hasNewApkVersion()) {
-            hasAppUpdate = true;
-            workFlow.addNode(new WorkNode(1, new Worker() {
-                @Override
-                public void doWork(Node current) {
+
+        workFlow.addNode(new WorkNode(1, new Worker() {
+            @Override
+            public void doWork(Node current) {
+                if (hasNewApkVersion()) {
+                    hasAppUpdate = true;
                     showDialogFragment(TYPE_FILE_APP, current);
+                } else {
+                    current.onCompleted();
                 }
-            }));
-        }
+            }
+        }));
+
         return this;
     }
 
@@ -162,19 +166,22 @@ public class AppVersionManager {
      * @return
      */
     public AppVersionManager updateRes() {
-        if (hasNewResVersion()) {
-            workFlow.addNode(new WorkNode(2, new Worker() {
-                @Override
-                public void doWork(Node current) {
+
+        workFlow.addNode(new WorkNode(2, new Worker() {
+            @Override
+            public void doWork(Node current) {
+                if (hasNewResVersion()) {
                     showDialogFragment(TYPE_FILE_RES, current);
+                } else {
+                    if (checkType == TYPE_MANUAL && !hasAppUpdate) {
+                        //手动检查更新，并且没有应用和资源文件更新的时候，toast提示一下
+                        Toast.makeText(activity.getApplicationContext(), R.string.app_update_is_latest_version, Toast.LENGTH_SHORT).show();
+                    }
+                    current.onCompleted();
                 }
-            }));
-        } else {
-            if (checkType == TYPE_MANUAL && !hasAppUpdate) {
-                //手动检查更新，并且没有应用和资源文件更新的时候，toast提示一下
-                Toast.makeText(activity.getApplicationContext(), R.string.app_update_is_latest_version, Toast.LENGTH_SHORT).show();
             }
-        }
+        }));
+
         return this;
     }
 
